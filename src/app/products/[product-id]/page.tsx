@@ -11,38 +11,11 @@ import AddToCartButton from '@/components/AddToCart'
 
 type Product = {
     id: number;
-    name: string;
+    title: string;
     description: string;
+    tags: string;
     price: number;
-    imageUrl: string;
-    category: string;
-    features: string[];
-    specifications: { [key: string]: string };
 };
-
-const initialProducts: Product[] = [
-    {
-        id: 1,
-        name: "Wheelchair",
-        description: "Comfortable and durable wheelchair for everyday use.",
-        price: 299.99,
-        imageUrl: "/images/wheelchair.jpg",
-        category: "Mobility",
-        features: [
-            "Foldable design for easy storage and transport",
-            "Padded armrests and seat for comfort",
-            "Durable steel frame",
-            "Weight capacity: 250 lbs"
-        ],
-        specifications: {
-            "Dimensions": "26\"W x 32\"D x 36\"H",
-            "Weight": "35 lbs",
-            "Frame Material": "Steel",
-            "Wheel Size": "24 inches"
-        }
-    },
-    // ... other products ...
-];
 
 export default function ProductPage() {
     const params = useParams()
@@ -50,9 +23,22 @@ export default function ProductPage() {
     const [product, setProduct] = useState<Product | null>(null)
 
     useEffect(() => {
-        const productId = Number(params['product-id'])
-        const foundProduct = initialProducts.find(p => p.id === productId)
-        setProduct(foundProduct || null)
+        const fetchProduct = async () => {
+            try {
+                const productId = params['product-id']
+                const response = await fetch(`http://127.0.0.1:5001/api/products/${productId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch product');
+                }
+                const data = await response.json();
+                setProduct(data);
+            } catch (error) {
+                console.error('Error fetching product:', error);
+                setProduct(null);
+            }
+        };
+
+        fetchProduct();
     }, [params])
 
     if (!product) {
@@ -86,45 +72,33 @@ export default function ProductPage() {
                         <div className="grid md:grid-cols-2 gap-6 lg:gap-12 items-start">
                             <div className="space-y-4">
                                 <img
-                                    src={`https://placehold.co/600x400?text=${encodeURIComponent(product.name)}`}
-                                    alt={product.name}
+                                    src={`https://placehold.co/600x400?text=${encodeURIComponent(product.title)}`}
+                                    alt={product.title}
                                     className="w-full h-auto object-cover rounded-lg"
                                 />
                             </div>
                             <div className="space-y-6">
                                 <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                                    {product.name}
+                                    {product.title}
                                 </h1>
                                 <p className="text-xl text-gray-700">{product.description}</p>
                                 <div className="flex items-center justify-between">
                                     <span className="text-3xl font-bold text-primary">
-                                        ${product.price.toFixed(2)}
+                                        ${product.price}
                                     </span>
-                                    <AddToCartButton product={product} />
+                                    {/* <AddToCartButton product={product} /> */}
                                 </div>
                                 <div>
-                                    <h2 className="text-xl font-semibold mb-2">Features</h2>
-                                    <ul className="list-disc pl-5 space-y-1">
-                                        {product.features.map((feature, index) => (
-                                            <li key={index}>{feature}</li>
+                                    <h2 className="text-xl font-semibold mb-2">Tags</h2>
+                                    <div className="flex flex-wrap gap-2">
+                                        {product.tags.split(',').map((tag, index) => (
+                                            <span key={index} className="bg-gray-200 px-2 py-1 rounded-full text-sm">
+                                                {tag.trim()}
+                                            </span>
                                         ))}
-                                    </ul>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="w-full py-12 bg-gray-50">
-                    <div className="container px-4 md:px-6">
-                        <h2 className="text-2xl font-bold mb-6">Specifications</h2>
-                        <div className="grid md:grid-cols-2 gap-4">
-                            {Object.entries(product.specifications).map(([key, value]) => (
-                                <div key={key} className="flex justify-between p-3 bg-white rounded-lg shadow">
-                                    <span className="font-semibold">{key}</span>
-                                    <span>{value}</span>
-                                </div>
-                            ))}
                         </div>
                     </div>
                 </section>
@@ -132,7 +106,7 @@ export default function ProductPage() {
                 <section className="w-full py-12 md:py-24 lg:py-32">
                     <div className="container px-4 md:px-6">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-8 text-center">
-                            Why Choose Our {product.name}?
+                            Why Choose Our {product.title}?
                         </h2>
                         <div className="grid gap-6 lg:grid-cols-3">
                             <div className="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-lg">
@@ -149,7 +123,7 @@ export default function ProductPage() {
                                 </div>
                                 <h3 className="text-xl font-bold">Superior Quality</h3>
                                 <p className="mt-2 text-sm text-gray-700">
-                                    Our {product.name} is made with the finest materials and undergoes rigorous quality checks.
+                                    Our {product.title} is made with the finest materials and undergoes rigorous quality checks.
                                 </p>
                             </div>
                             <div className="flex flex-col items-center text-center p-6 bg-white rounded-lg shadow-lg">
@@ -183,7 +157,7 @@ export default function ProductPage() {
                                 </div>
                                 <h3 className="text-xl font-bold">Warranty & Support</h3>
                                 <p className="mt-2 text-sm text-gray-700">
-                                    Our {product.name} comes with a warranty and dedicated customer support.
+                                    Our {product.title} comes with a warranty and dedicated customer support.
                                 </p>
                             </div>
                         </div>

@@ -58,10 +58,24 @@ export default function Header() {
         const password = formData.get('password') as string;
 
         try {
-            // Implement your register logic here
-            console.log('Register:', { name, email, password });
-            // After successful registration, you might want to automatically log the user in
-            // or show a success message and switch back to the login form
+            const response = await fetch(`${process.env.BACKEND_URL}register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "name": name,
+                    "email": email,
+                    "password": password
+                }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Registration failed');
+            }
+
+            const data = await response.json();
+            console.log('Registration successful:', data);
             setIsLoginForm(true);
         } catch (error) {
             console.error('Registration failed:', error);
@@ -77,19 +91,46 @@ export default function Header() {
         const password = formData.get('password') as string;
 
         try {
-            // Implement your login logic here
-            console.log('Login:', { email, password });
-            // After successful login, set the user
-            setUser({ name: 'John Doe' }); // Replace with actual user data
+            const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    "email": email,
+                    "password": password
+                }),
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Login failed');
+            }
+
+            console.log('Login successful:', data);
+            setUser({ name: data.name }); // Assuming the API returns the user's name
         } catch (error) {
             console.error('Login failed:', error);
-            setLoginError('Login failed. Please try again.');
+            setLoginError(error instanceof Error ? error.message : 'Login failed. Please try again.');
         }
     };
 
-    const handleLogout = () => {
-        // Implement your logout logic here
-        setUser(null);
+    const handleLogout = async () => {
+        try {
+            const response = await fetch(`${process.env.BACKEND_URL}logout`, {
+                method: 'POST',
+                credentials: 'include', // Include cookies in the request
+            });
+
+            if (!response.ok) {
+                throw new Error('Logout failed');
+            }
+
+            setUser(null);
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     return (

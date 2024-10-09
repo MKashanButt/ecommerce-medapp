@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
@@ -6,19 +6,16 @@ import Image from 'next/image';
 
 type Product = {
     id: number;
-    name: string;
+    title: string;
     description: string;
     price: number;
     imageUrl: string;
     category: string;
 };
 
-interface ProductSliderProps {
-    products: Product[];
-}
-
-export default function ProductSlider({ products }: ProductSliderProps) {
-    const [currentSlide, setCurrentSlide] = React.useState<number>(0);
+export default function ProductSlider() {
+    const [products, setProducts] = useState<Product[]>([]);
+    const [currentSlide, setCurrentSlide] = useState<number>(0);
     const sliderRef = useRef<HTMLDivElement>(null);
     const autoplayRef = useRef<number | undefined>();
 
@@ -31,7 +28,24 @@ export default function ProductSlider({ products }: ProductSliderProps) {
         return 4; // Default to desktop view
     };
 
-    const [visibleSlides, setVisibleSlides] = React.useState(getVisibleSlides());
+    const [visibleSlides, setVisibleSlides] = useState(getVisibleSlides());
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:5001/api/products');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+                const data = await response.json();
+                setProducts(data);
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            }
+        };
+
+        fetchProducts();
+    }, []);
 
     // Autoplay Logic
     useEffect(() => {
@@ -94,12 +108,12 @@ export default function ProductSlider({ products }: ProductSliderProps) {
                                 <div className="flex flex-col items-center bg-white rounded-xl shadow-md p-4">
                                     <div className="relative w-full h-48 mb-4">
                                         <img
-                                            src={`https://placehold.co/500x200?text=${encodeURIComponent(product.name)}`}
-                                            alt={product.name}
+                                            src={`https://placehold.co/500x200?text=${encodeURIComponent(product.title)}`}
+                                            alt={product.title}
                                             className="rounded-xl object-cover sm:w-[4em] md:w-full lg:w-full h-full"
                                         />
                                     </div>
-                                    <h3 className="text-xl font-bold text-center">{product.name}</h3>
+                                    <h3 className="text-xl font-bold text-center">{product.title}</h3>
                                     <p className="mt-2 text-sm text-gray-700 text-center">{product.description}</p>
                                     <Link href={`/products/${product.id}`}>
                                         <Button className="mt-4 w-full" variant="outline">

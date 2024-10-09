@@ -14,11 +14,10 @@ import { setRequestMeta } from 'next/dist/server/request-meta'
 
 type Product = {
     id: number;
-    name: string;
+    title: string;
     description: string;
-    price: number;
-    imageUrl: string;
-    category: string;
+    tags: string;
+    price: string;
 };
 
 interface AddToCartButtonProps {
@@ -61,13 +60,13 @@ export default function AddToCartButton({ product }: AddToCartButtonProps) {
                     </DialogHeader>
                     <div className="flex items-center space-x-4 py-4">
                         <img
-                            src={`https://placehold.co/100x100?text=${encodeURIComponent(product.name)}`}
-                            alt={product.name}
+                            src={`https://placehold.co/100x100?text=${encodeURIComponent(product.title)}`}
+                            alt={product.title}
                             className="w-16 h-16 object-cover rounded"
                         />
                         <div>
-                            <h4 className="font-semibold">{product.name}</h4>
-                            <p className="text-sm text-gray-500">${product.price.toFixed(2)}</p>
+                            <h4 className="font-semibold">{product.title}</h4>
+                            <p className="text-sm text-gray-500">${product.price}</p>
                         </div>
                     </div>
                     <DialogFooter className="sm:justify-start">

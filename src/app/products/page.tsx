@@ -12,81 +12,23 @@ import Footer from '@/components/Footer'
 import Link from 'next/link'
 import AddToCartButton from '@/components/AddToCart'
 
-// Define the Product type
+// Define the Product type based on the schema
 type Product = {
     id: number;
-    name: string;
+    title: string;
     description: string;
-    price: number;
-    imageUrl: string;
-    category: string;
+    tags: string;
+    created_at: string;
+    updated_at: string;
+    price: string;
 };
-
-const initialProducts: Product[] = [
-    {
-        id: 1,
-        name: "Wheelchair",
-        description: "Comfortable and durable wheelchair for everyday use.",
-        price: 299.99,
-        imageUrl: "/images/wheelchair.jpg",
-        category: "Mobility",
-    },
-    {
-        id: 2,
-        name: "Walker",
-        description: "Adjustable walker with easy-fold mechanism for portability.",
-        price: 89.99,
-        imageUrl: "/images/walker.jpg",
-        category: "Mobility",
-    },
-    {
-        id: 3,
-        name: "Hospital Bed",
-        description: "Electric hospital bed with adjustable height and positions.",
-        price: 999.99,
-        imageUrl: "/images/hospital-bed.jpg",
-        category: "Bedroom",
-    },
-    {
-        id: 4,
-        name: "Oxygen Concentrator",
-        description: "Portable oxygen concentrator for respiratory support.",
-        price: 699.99,
-        imageUrl: "/images/oxygen-concentrator.jpg",
-        category: "Respiratory",
-    },
-    {
-        id: 5,
-        name: "Shower Chair",
-        description: "Sturdy shower chair with non-slip feet for bathroom safety.",
-        price: 59.99,
-        imageUrl: "/images/shower-chair.jpg",
-        category: "Bathroom",
-    },
-    {
-        id: 6,
-        name: "Crutches",
-        description: "Adjustable aluminum crutches for temporary mobility assistance.",
-        price: 39.99,
-        imageUrl: "/images/crutches.jpg",
-        category: "Mobility",
-    },
-    {
-        id: 7,
-        name: "Blood Pressure Monitor",
-        description: "Digital blood pressure monitor for home use.",
-        price: 49.99,
-        imageUrl: "/images/bp-monitor.jpg",
-        category: "Health Monitoring",
-    },
-];
 
 export default function Products() {
     const [searchQuery, setSearchQuery] = useState('')
-    const [products] = useState<Product[]>(initialProducts)
-    const [filteredProducts, setFilteredProducts] = useState<Product[]>(initialProducts)
-    const [categories, setCategories] = useState<string[]>([])
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+    const [products, setProducts] = useState<Product[]>([])
+    const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
+    const [tags, setTags] = useState<string[]>([])
+    const [selectedTags, setSelectedTags] = useState<string[]>([])
     const [currentPage, setCurrentPage] = useState(1)
     const [productsPerPage] = useState(6)
     const searchParams = useSearchParams()
@@ -94,28 +36,43 @@ export default function Products() {
     const search = searchParams.get('search')
 
     useEffect(() => {
-        const uniqueCategories = Array.from(new Set(products.map(product => product.category)))
-        setCategories(uniqueCategories)
+        const fetchProducts = async () => {
+            try {
+                const response = await fetch('http://127.0.0.1:5001/api/products');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch products');
+                }
+                const data = await response.json();
+                setProducts(data);
+                setFilteredProducts(data);
+                const uniqueTags = Array.from(new Set(data.flatMap((product: Product) => product.tags.split(',').map(tag => tag.trim()))))
+                setTags(uniqueTags as string[])
+            } catch (error) {
+                console.error('Error fetching products:', error);
+            }
+        };
+
+        fetchProducts();
 
         if (search) {
             setSearchQuery(search)
         }
-    }, [products, search])
+    }, [search])
 
     useEffect(() => {
         filterProducts()
-    }, [searchQuery, selectedCategories, products])
+    }, [searchQuery, selectedTags, products])
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault()
         router.push(`/products?search=${encodeURIComponent(searchQuery)}`)
     }
 
-    const handleCategoryChange = (category: string) => {
-        setSelectedCategories(prev =>
-            prev.includes(category)
-                ? prev.filter(c => c !== category)
-                : [...prev, category]
+    const handleTagChange = (tag: string) => {
+        setSelectedTags(prev =>
+            prev.includes(tag)
+                ? prev.filter(t => t !== tag)
+                : [...prev, tag]
         )
     }
 
@@ -124,13 +81,15 @@ export default function Products() {
 
         if (searchQuery) {
             filtered = filtered.filter(product =>
-                product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                product.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                 product.description.toLowerCase().includes(searchQuery.toLowerCase())
             )
         }
 
-        if (selectedCategories.length > 0) {
-            filtered = filtered.filter(product => selectedCategories.includes(product.category))
+        if (selectedTags.length > 0) {
+            filtered = filtered.filter(product =>
+                selectedTags.some(tag => product.tags.toLowerCase().includes(tag.toLowerCase()))
+            )
         }
 
         setFilteredProducts(filtered)
@@ -184,15 +143,15 @@ export default function Products() {
                             <div className="w-full md:w-1/4">
                                 <h2 className="text-2xl font-bold mb-4">Filters</h2>
                                 <div className="space-y-2">
-                                    {categories.map(category => (
-                                        <div key={category} className="flex items-center">
+                                    {tags.map(tag => (
+                                        <div key={tag} className="flex items-center">
                                             <Checkbox
-                                                id={category}
-                                                checked={selectedCategories.includes(category)}
-                                                onCheckedChange={() => handleCategoryChange(category)}
+                                                id={tag}
+                                                checked={selectedTags.includes(tag)}
+                                                onCheckedChange={() => handleTagChange(tag)}
                                             />
-                                            <label htmlFor={category} className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                                {category}
+                                            <label htmlFor={tag} className="ml-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                {tag.charAt(0).toUpperCase() + tag.substring(1)}
                                             </label>
                                         </div>
                                     ))}
@@ -204,13 +163,17 @@ export default function Products() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {currentProducts.map((product) => (
                                         <div key={product.id} className="bg-white rounded-lg shadow-lg overflow-hidden">
-                                            <img src={`https://placehold.co/600x400?text=${encodeURIComponent(product.name)}`} alt={product.name} className="w-full h-48 object-cover" />
+                                            <img src={`https://placehold.co/600x400?text=${encodeURIComponent(product.title)}`} alt={product.title} className="w-full h-48 object-cover" />
                                             <Link href={`/products/${product.id}`}>
                                                 <div className="p-4">
-                                                    <h3 className="text-lg font-semibold mb-2">{product.name}</h3>
+                                                    <h3 className="text-lg font-semibold mb-2">{product.title}</h3>
                                                     <p className="text-gray-600 text-sm mb-4">{product.description}</p>
                                                     <div className="flex justify-between items-center">
-                                                        <span className="text-xl font-bold text-primary">${product.price.toFixed(2)}</span>
+                                                        <span className="text-xl font-bold text-primary">
+                                                            {product.price !== undefined && product.price !== null
+                                                                ? `$${product.price}`
+                                                                : 'Price not available'}
+                                                        </span>
                                                         <AddToCartButton product={product} />
                                                     </div>
                                                 </div>
